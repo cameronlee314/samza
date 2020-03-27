@@ -69,7 +69,11 @@ public class ContainerHeartbeatMonitor {
   public void stop() {
     if (started) {
       LOG.info("Stopping ContainerHeartbeatMonitor");
-      scheduler.shutdown();
+      /*
+       * ScheduledExecutorService.shutdownNow cancels the fixed-rate task and the one-shot force shutdown.
+       * ScheduledExecutorService.shutdown only cancels the fixed-rate task.
+       */
+      scheduler.shutdownNow();
     }
   }
 

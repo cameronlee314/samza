@@ -21,7 +21,7 @@ package org.apache.samza.container;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.mockito.Mockito.*;
@@ -33,15 +33,15 @@ public class TestContainerHeartbeatMonitor {
       throws InterruptedException {
     ContainerHeartbeatClient mockClient = mock(ContainerHeartbeatClient.class);
     CountDownLatch countDownLatch = new CountDownLatch(1);
-    Runnable onExpired = () -> {
-      countDownLatch.countDown();
-    };
+    Runnable onExpired = countDownLatch::countDown;
     ContainerHeartbeatMonitor monitor = new ContainerHeartbeatMonitor(onExpired, mockClient);
     ContainerHeartbeatResponse response = new ContainerHeartbeatResponse(false);
     when(mockClient.requestHeartbeat()).thenReturn(response);
     monitor.start();
     boolean success = countDownLatch.await(2, TimeUnit.SECONDS);
     Assert.assertTrue(success);
+    // stop the monitor to make sure it doesn't do a force shutdown of the test process
+    monitor.stop();
   }
 
   @Test
@@ -49,9 +49,7 @@ public class TestContainerHeartbeatMonitor {
       throws InterruptedException {
     ContainerHeartbeatClient client = mock(ContainerHeartbeatClient.class);
     CountDownLatch countDownLatch = new CountDownLatch(1);
-    Runnable onExpired = () -> {
-      countDownLatch.countDown();
-    };
+    Runnable onExpired = countDownLatch::countDown;
     ContainerHeartbeatMonitor monitor = new ContainerHeartbeatMonitor(onExpired, client);
     ContainerHeartbeatResponse response = new ContainerHeartbeatResponse(true);
     when(client.requestHeartbeat()).thenReturn(response);
@@ -59,5 +57,7 @@ public class TestContainerHeartbeatMonitor {
     boolean success = countDownLatch.await(2, TimeUnit.SECONDS);
     Assert.assertFalse(success);
     Assert.assertEquals(1, countDownLatch.getCount());
+    // stop the monitor to make sure it doesn't do a force shutdown of the test process
+    monitor.stop();
   }
 }
